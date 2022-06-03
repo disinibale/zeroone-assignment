@@ -1,16 +1,16 @@
 import { FastifyRequest, FastifyReply } from 'fastify'
-import { inputDataSchema, searchDataSchema } from './news.schema'
+import { inputDataSchema, searchDataSchema, topicArraySchema, searcByParamSchema, topicsInputSchema } from './news.schema';
 import NewsServices from './news.service';
 import slugify from 'slugify'
 
 const create = async (
     request: FastifyRequest<{
-        Body: inputDataSchema
+        Body: inputDataSchema,
     }>,
     reply: FastifyReply
 ) => {
 
-    const { title, thumbnail, content, status } = request.body
+    const { title, thumbnail, content, status, topics } = request.body
     const slugged = slugify(title, { replacement: '-', lower: true })
     const slug = slugged || undefined
 
@@ -20,21 +20,24 @@ const create = async (
             slug,
             thumbnail,
             content,
-            status
-        })
+            status,
+        }, topics)
 
-        return reply.code(201).send(response)
+        return reply.code(201).send({response})
     } catch (e) {
         reply.code(400).send(e)
         console.log(e)
     }
 }
 
-const getAll = async (reply: FastifyReply) => {
-    try {
-        const response = await NewsServices.getAllNews()
+const getAll = async (request: FastifyRequest<{
+    Querystring: searcByParamSchema
+}>, reply: FastifyReply) => {
 
-        return reply.code(200).send(response)
+    try {
+        const response = await NewsServices.getAllNews(request.query)
+
+        return reply.code(200).send({response})
     } catch (e) {
         console.log(e)
         reply.code(400).send(e)
@@ -47,15 +50,16 @@ const getById = async (
     }>,
     reply: FastifyReply
 ) => {
+
     const { id } = request.params
 
     try {
         const response = await NewsServices.getNews(id)
 
-        return reply.code(200).send(response)
+        return reply.code(200).send({response})
     } catch (e) {
         console.log(e)
-        reply.code(400).send(e)
+        reply.code(500).send(e)
     }
 }
 
@@ -67,18 +71,12 @@ const update = async (
     reply: FastifyReply
 ) => {
     const { id } = request.params
-    const { title, thumbnail, content, status } = request.body
+    const { title, topics } = request.body
     const slugged = slugify(title, { replacement: '-', lower: true })
     const slug = slugged || undefined
 
     try {
-        const response = await NewsServices.updateNews({ id }, {
-            title,
-            slug,
-            thumbnail,
-            content,
-            status
-        })
+        const response = await NewsServices.updateNews({ id }, request.body , topics)
 
         return reply.code(201).send(response)
     } catch (e) {

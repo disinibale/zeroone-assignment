@@ -6,27 +6,29 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model News {
-  id        Int     @id @default(autoincrement())
-  title     String  @db.VarChar(255)
+  id        Int      @id @default(autoincrement())
+  title     String   @db.VarChar(255)
   slug      String?  @db.VarChar(255)
   thumbnail String?
-  content   String  @db.Text
+  content   String   @db.Text
   status    String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  
   topics    Topic[]
 }
 
 model Topic {
-  id          Int     @id @default(autoincrement())
-  name        String
-  description String? @db.Text
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
   news        News[]
 }
